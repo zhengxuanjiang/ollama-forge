@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ollama GUI</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header"><div class="logo"><span class="logo-icon">🦙</span><span class="logo-text">Ollama<span class="accent">GUI</span></span></div><button class="btn-i" id="btn-new-chat" title="新建对话 Ctrl+N"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
+    <div class="chat-list" id="chat-list"></div>
+    <div class="sidebar-foot">
+      <button class="btn-side" id="btn-finetune"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> 微调中心</button>
+      <button class="btn-side" id="btn-workshop"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> 模型工坊</button>
+      <button class="btn-side" id="btn-api-page"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> API 共享</button>
+      <button class="btn-side" id="btn-pretrain"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> 训练实验室</button>
+      <button class="btn-side" id="btn-clear-all"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 清除所有</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <button class="btn-i mob-only" id="btn-toggle-sb"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <select id="model-select" class="sel-model"><option value="">加载中...</option></select>
+      <button class="btn-t" id="btn-preload" title="预热模型"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></button>
+      <button class="btn-t" id="btn-model-mgmt" title="模型管理"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <div class="spacer"></div>
+      <div class="status"><span class="dot" id="conn-dot"></span><span id="conn-text">检测中</span></div>
+      <button class="btn-i" id="btn-export" title="导出"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+      <button class="btn-i" id="btn-settings" title="设置"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></button>
+    </header>
+    <div class="chat-area" id="chat-area">
+      <div class="welcome" id="welcome"><div class="w-icon">🦙</div><h1>Ollama GUI</h1><p class="w-sub">本地大语言模型的优雅交互界面</p>
+        <div class="cards"><div class="card"><span>🧠</span><b>思考模式</b></div><div class="card"><span>⚡</span><b>GPU加速</b></div><div class="card"><span>🔑</span><b>API共享</b></div><div class="card"><span>🖼️</span><b>图片理解</b></div><div class="card"><span>📐</span><b>公式渲染</b></div><div class="card"><span>💻</span><b>代码高亮</b></div></div>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="gen-stats" id="gen-stats" style="display:none"><span>⚡ <b id="st-speed">0</b> tok/s</span><span>💭 <b id="st-think-tok">0</b></span><span>📝 <b id="st-tok">0</b></span><span>⏱️ <b id="st-time">0</b>s</span></div>
+    </div>
+    <div class="input-wrap">
+      <div class="input-chips">
+        <button class="chip" id="chip-think"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.5V20a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2.5c2.9-1.2 5-4.1 5-7.5a8 8 0 0 0-8-8z"/></svg> 思考</button>
+        <button class="chip" id="chip-sys"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> 系统提示词</button>
+        <div class="dev-badge" id="dev-badge"><span class="dev-dot"></span><span id="dev-label">自动</span></div>
+      </div>
+      <div class="sys-panel" id="sys-panel" style="display:none"><div class="sys-head"><span>系统提示词</span><div class="presets"><button class="pre" data-p="assistant">助手</button><button class="pre" data-p="coder">编程</button><button class="pre" data-p="translator">翻译</button><button class="pre" data-p="writer">写作</button><button class="pre" data-p="analyst">分析</button></div></div><textarea id="sys-text" placeholder="输入系统提示词..." rows="2"></textarea></div>
+      <div class="img-prev" id="img-prev" style="display:none"><img id="prev-img"><button class="img-rm" id="img-rm">✕</button></div>
+      <div class="ibox">
+        <label class="att" title="上传图片"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><input type="file" id="img-in" accept="image/*" hidden></label>
+        <textarea id="inp" placeholder="输入消息... Enter 发送" rows="1"></textarea>
+        <button class="btn-send" id="btn-send"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="btn-stop" id="btn-stop" style="display:none"><svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+      </div>
+    </div>
+  </main>
+  <!-- Settings panel -->
+  <div class="overlay right" id="ov-settings" style="display:none"><div class="slide-panel"><div class="panel-head"><h2>推理设置</h2><button class="btn-i" id="cl-settings">✕</button></div><div class="panel-body">
+    <section><h3>🖥️ 设备</h3><div class="dev-grid"><label class="dopt"><input type="radio" name="dev" value="auto" checked><div class="dc"><span>🔄</span><b>自动</b></div></label><label class="dopt"><input type="radio" name="dev" value="gpu"><div class="dc"><span>⚡</span><b>GPU</b></div></label><label class="dopt"><input type="radio" name="dev" value="cpu"><div class="dc"><span>🖥️</span><b>CPU</b></div></label><label class="dopt"><input type="radio" name="dev" value="hybrid"><div class="dc"><span>🔀</span><b>混合</b></div></label></div><div id="hybrid-cfg" style="display:none" class="sub-cfg"><label class="sl">GPU 层: <b id="v-layers">20</b></label><input type="range" id="r-layers" min="1" max="100" value="20"></div></section>
+    <section><h3>🧠 思考</h3><div class="trow"><span>启用</span><label class="sw"><input type="checkbox" id="sw-think"><span class="swt"></span></label></div></section>
+    <section><h3>⏰ Keep-Alive</h3><div class="ka-opts"><label class="ka"><input type="radio" name="ka" value="0"><span>即卸</span></label><label class="ka"><input type="radio" name="ka" value="5m" checked><span>5分</span></label><label class="ka"><input type="radio" name="ka" value="30m"><span>30分</span></label><label class="ka"><input type="radio" name="ka" value="1h"><span>1时</span></label><label class="ka"><input type="radio" name="ka" value="-1"><span>永久</span></label></div></section>
+    <section><h3>🎛️ 参数</h3>
+      <label class="sl">Temperature: <b id="v-temp">0.7</b></label><input type="range" id="r-temp" min="0" max="2" step="0.1" value="0.7">
+      <label class="sl mt">Top P: <b id="v-topp">0.9</b></label><input type="range" id="r-topp" min="0" max="1" step="0.05" value="0.9">
+      <label class="sl mt">重复惩罚: <b id="v-rp">1.1</b></label><input type="range" id="r-rp" min="1" max="2" step="0.05" value="1.1">
+      <label class="sl mt">上下文: <b id="v-ctx">4096</b></label><input type="range" id="r-ctx" min="512" max="131072" step="512" value="4096"><div class="hints"><span>512 快</span><span>128K 慢</span></div>
+      <label class="sl mt">种子: <b id="v-seed">随机</b></label><input type="range" id="r-seed" min="-1" max="9999" step="1" value="-1">
+    </section>
+    <section><h3>📊 运行模型</h3><div id="run-list"></div><button class="btn-ref" id="btn-ref-run">🔄 刷新</button></section>
+  </div></div></div>
+  <!-- Modals -->
+  <div class="overlay" id="ov-model" style="display:none"><div class="modal"><div class="modal-h"><h2>模型管理</h2><button class="btn-i" id="cl-model">✕</button></div><div class="modal-b"><h3>拉取</h3><div class="pull-row"><input type="text" id="pull-name" placeholder="llama3.2, qwen3:8b..."><button class="btn-p" id="btn-pull">拉取</button></div><div id="pull-prog" style="display:none"><div class="pbar"><div class="pfill" id="pfill"></div></div><div class="pull-info"><span class="ptxt" id="ptxt">准备...</span></div><div class="pull-actions"><button class="btn-pull-ctrl" id="btn-pull-pause">⏸ 暂停</button><button class="btn-pull-ctrl" id="btn-pull-resume" style="display:none">▶ 继续</button><button class="btn-pull-ctrl btn-pull-danger" id="btn-pull-cancel">✕ 放弃</button></div></div><div class="tags"><span class="tag-l">热门:</span><button class="tag" data-m="llama3.2">Llama3.2</button><button class="tag" data-m="qwen3:8b">Qwen3</button><button class="tag" data-m="deepseek-r1:7b">DeepSeek-R1</button><button class="tag" data-m="gemma2:9b">Gemma2</button><button class="tag" data-m="phi4">Phi-4</button></div><a class="lib-link" href="https://ollama.com/library" target="_blank">🔗 Ollama 模型仓库 →</a><h3 style="margin-top:16px">已安装</h3><div id="m-list"></div></div></div></div>
+  <div class="overlay" id="ov-export" style="display:none"><div class="modal modal-s"><div class="modal-h"><h2>导出</h2><button class="btn-i" id="cl-export">✕</button></div><div class="modal-b exp-btns"><button class="exp-btn" id="exp-md"><span>📄</span>Markdown</button><button class="exp-btn" id="exp-json"><span>📋</span>JSON</button></div></div></div>
+  <div class="overlay" id="ov-rename" style="display:none"><div class="modal modal-s"><div class="modal-h"><h2>重命名</h2><button class="btn-i" id="cl-rename">✕</button></div><div class="modal-b"><input type="text" id="rename-input" class="rename-inp"><button class="btn-p" id="btn-rename-ok" style="margin-top:10px;width:100%">确认</button></div></div></div>
+  <div class="overlay" id="ov-switch" style="display:none"><div class="modal modal-s"><div class="modal-h"><h2>切换模型</h2><button class="btn-i" id="cl-switch">✕</button></div><div class="modal-b"><p class="desc" id="switch-msg"></p><div class="switch-btns"><button class="btn-sw" id="sw-unload">卸载旧模型</button><button class="btn-sw btn-sw-sec" id="sw-keep">保留</button></div></div></div></div>
+  <!-- API Sharing Modal -->
+  <!-- API Sharing Full Page -->
+  <div class="ft-page" id="ov-api" style="display:none">
+    <div class="ft-page-header">
+      <div class="ft-page-title"><span class="ft-page-icon">🔑</span><h2>API 共享中心</h2></div>
+      <button class="btn-ft-close" id="cl-api"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> 返回聊天</button>
+    </div>
+    <div class="ft-page-body" id="api-body">
+
+      <!-- Top: Status + Quick Info -->
+      <div class="api-top-grid">
+        <!-- Left: Sharing toggle + endpoints -->
+        <div class="ft-section api-status-card">
+          <div class="share-top">
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                <span class="api-status-dot" id="api-status-dot"></span>
+                <b style="font-size:15px">API 共享模式</b>
+              </div>
+              <p class="desc" style="margin:0">开启后，持有密钥的用户可通过 OpenAI 兼容接口调用你的模型</p>
+            </div>
+            <label class="sw sw-lg"><input type="checkbox" id="sw-sharing"><span class="swt"></span></label>
+          </div>
+          <div class="share-info" id="share-info" style="display:none">
+            <div class="api-endpoints-grid">
+              <div class="url-box">
+                <span class="url-label">🌐 共享地址</span>
+                <div class="url-row"><code id="share-url">-</code><button class="btn-copy" id="btn-copy-url">复制</button></div>
+              </div>
+              <div class="url-box">
+                <span class="url-label">🔗 OpenAI 兼容端点</span>
+                <div class="url-row"><code id="share-v1">-</code></div>
+              </div>
+              <div class="url-box">
+                <span class="url-label">🛡️ 管理员令牌</span>
+                <div class="url-row"><code id="admin-token-display">-</code><button class="btn-copy" id="btn-copy-admin">复制</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Stats -->
+        <div class="ft-section api-stats-card">
+          <h3 style="font-size:13px;font-weight:600;margin-bottom:10px">📊 使用概览</h3>
+          <div class="api-stats-grid">
+            <div class="api-stat"><span class="api-stat-val" id="api-stat-keys">0</span><span class="api-stat-label">活跃密钥</span></div>
+            <div class="api-stat"><span class="api-stat-val" id="api-stat-today">0</span><span class="api-stat-label">今日调用</span></div>
+            <div class="api-stat"><span class="api-stat-val" id="api-stat-total">0</span><span class="api-stat-label">累计调用</span></div>
+            <div class="api-stat"><span class="api-stat-val" id="api-stat-models">0</span><span class="api-stat-label">可用模型</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle: Key Management -->
+      <div class="api-mid-grid">
+        <!-- Left: Create Key -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>🔐 创建密钥</h3><p class="desc">为需要调用 API 的用户创建独立密钥，每个密钥可单独设置权限和配额</p></div>
+          <div class="key-form">
+            <input type="text" id="key-name" placeholder="密钥名称（如：给同事小李、前端项目、测试用）" class="key-inp">
+            <div class="key-opts">
+              <label><span>速率限制 (次/分, 0=无限)</span><input type="number" id="key-rpm" value="0" min="0" class="key-num"></label>
+              <label><span>每日配额 (0=无限)</span><input type="number" id="key-daily" value="0" min="0" class="key-num"></label>
+              <label><span>过期天数 (0=永不过期)</span><input type="number" id="key-expire" value="0" min="0" class="key-num"></label>
+              <label><span>允许模型 (留空=全部)</span><input type="text" id="key-models" placeholder="model1,model2" class="key-inp" style="margin-bottom:0"></label>
+            </div>
+            <button class="btn-p" id="btn-gen-key" style="margin-top:10px;width:100%">🔑 生成密钥</button>
+          </div>
+          <div id="new-key-show" style="display:none" class="new-key-box">
+            <p class="desc">⚠️ 请立即复制！关闭后不再显示完整密钥</p>
+            <div class="key-display"><code id="new-key-val"></code><button class="btn-copy" id="btn-copy-key">复制</button></div>
+          </div>
+        </div>
+
+        <!-- Right: Key List -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📋 已有密钥</h3><p class="desc">管理所有已创建的 API 密钥</p></div>
+          <div id="keys-list"><p class="desc">暂无密钥</p></div>
+        </div>
+      </div>
+
+      <!-- Bottom: Examples -->
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📖 调用示例</h3><p class="desc">使用标准 OpenAI SDK 或 cURL 即可调用，无需修改现有代码</p></div>
+        <div id="api-examples" class="api-examples"></div>
+      </div>
+
+    </div>
+  </div>
+  <!-- Fine-Tune Full Page -->
+  <div class="ft-page" id="ov-ft" style="display:none">
+    <div class="ft-page-header">
+      <div class="ft-page-title"><span class="ft-page-icon">🔧</span><h2>微调中心</h2></div>
+      <button class="btn-ft-close" id="cl-ft"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> 返回聊天</button>
+    </div>
+    <div class="ft-page-nav">
+      <button class="ft-tab active" data-tab="hw"><span class="ft-tab-icon">🖥️</span><span class="ft-tab-text">硬件检测</span></button>
+      <button class="ft-tab" data-tab="env"><span class="ft-tab-icon">🐍</span><span class="ft-tab-text">训练环境</span></button>
+      <button class="ft-tab" data-tab="method"><span class="ft-tab-icon">📋</span><span class="ft-tab-text">微调方式</span></button>
+      <button class="ft-tab" data-tab="data"><span class="ft-tab-icon">📊</span><span class="ft-tab-text">数据集</span></button>
+      <button class="ft-tab" data-tab="train"><span class="ft-tab-icon">🚀</span><span class="ft-tab-text">训练监控</span></button>
+      <button class="ft-tab" data-tab="history"><span class="ft-tab-icon">📜</span><span class="ft-tab-text">历史记录</span></button>
+      <button class="ft-tab" data-tab="guide"><span class="ft-tab-icon">📖</span><span class="ft-tab-text">使用指南</span></button>
+    </div>
+    <div class="ft-page-body">
+    <!-- Global operation banner (visible across all tabs when an operation is running) -->
+    <div id="ft-op-banner" class="ft-op-banner" style="display:none">
+      <div class="ft-op-banner-inner">
+        <span class="ft-op-spinner"></span>
+        <span id="ft-op-text">操作进行中...</span>
+      </div>
+    </div>
+
+    <!-- Tab: Hardware -->
+    <div class="ft-pane active" id="ft-hw">
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>🖥️ 硬件信息</h3></div>
+        <div class="ft-hw-info" id="ft-hw-info"><p class="desc">🔍 正在检测硬件...</p></div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📁 存储路径设置</h3><p class="desc">微调过程中的所有文件保存目录，可自定义到其他盘避免占用 C 盘</p></div>
+        <div class="ft-path-form">
+          <div class="ft-path-row">
+            <label class="ft-label">微调数据目录 <small>数据集、训练输出、合并模型</small></label>
+            <div class="ft-path-input-row">
+              <input type="text" id="cfg-ft-dir" class="ft-input" placeholder="例如 E:/ollama-gui-finetune">
+              <button class="btn-p" id="btn-save-paths">💾 保存</button>
+            </div>
+          </div>
+          <div class="ft-path-row">
+            <label class="ft-label">HuggingFace 模型缓存 <small>下载的基座模型, 通常几~几十GB</small></label>
+            <input type="text" id="cfg-hf-home" class="ft-input" placeholder="例如 E:/hf-cache (留空=默认 ~/.cache/huggingface)">
+          </div>
+          <div id="cfg-save-msg" style="display:none;margin-top:8px" class="ft-msg"></div>
+        </div>
+        <details class="ft-details">
+          <summary>📂 查看完整文件结构</summary>
+          <div id="ft-paths-detail" class="ft-path-detail"><p class="desc">加载中...</p></div>
+        </details>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>💡 推荐方案</h3></div>
+        <div id="ft-recs"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Environment -->
+    <div class="ft-pane" id="ft-env">
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>🐍 Python 训练环境</h3><p class="desc">选择或创建用于训练的 Python 环境</p></div>
+        <div id="env-list" class="ft-env-list"><p class="desc">🔍 正在检测...</p></div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>➕ 创建新虚拟环境</h3></div>
+        <div class="ft-env-create">
+          <label class="ft-label">安装路径</label>
+          <input type="text" id="venv-path" class="ft-input" placeholder="留空使用默认路径">
+          <button class="btn-p" id="btn-create-venv" style="margin-top:10px;width:100%">📦 创建并安装依赖</button>
+          <div id="venv-progress" style="display:none;margin-top:10px">
+            <div class="pbar"><div class="pfill" id="venv-pfill"></div></div>
+            <div class="ft-log" id="venv-log" style="max-height:150px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>🤗 HuggingFace 账号</h3><p class="desc">登录后可下载受限模型 (如 Llama 系列)。开放模型 (Qwen, Phi) 无需登录。</p></div>
+        <div id="hf-status" class="ft-hf-status"><span class="ft-hf-checking">🔍 检查登录状态...</span></div>
+        <div id="hf-login-form" style="display:none;margin-top:10px">
+          <label class="ft-label">HuggingFace Token <a href="https://huggingface.co/settings/tokens" target="_blank" class="ft-link-sm">(获取 Token →)</a></label>
+          <div class="ft-path-input-row">
+            <input type="password" id="hf-token" class="ft-input" placeholder="hf_xxxxxxxxxx...">
+            <button class="btn-p" id="btn-hf-login">🔑 登录</button>
+          </div>
+          <p class="desc" style="margin-top:6px">1. 点右侧链接创建 Read 权限 Token → 2. 粘贴到此处 → 3. 点登录</p>
+        </div>
+        <div id="hf-login-msg" style="display:none;margin-top:8px" class="ft-msg"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Method -->
+    <div class="ft-pane" id="ft-method">
+      <div class="ft-methods">
+        <div class="ft-mcard" data-m="modelfile"><div class="ft-micon">📝</div><h4>Modelfile 定制</h4><p>通过系统提示 + 少量示例定制模型行为<br><b>⏱ &lt;1分钟 · 无需GPU</b></p></div>
+        <div class="ft-mcard" data-m="qlora"><div class="ft-micon">🧬</div><h4>QLoRA 4-bit 微调</h4><p>真正的权重训练，显存友好<br><b>⏱ 1-4h · 需要 ≥8GB VRAM</b></p></div>
+        <div class="ft-mcard" data-m="lora"><div class="ft-micon">🔬</div><h4>LoRA 16-bit 微调</h4><p>更高精度训练<br><b>⏱ 2-8h · 需要 ≥24GB VRAM</b></p></div>
+        <div class="ft-mcard" data-m="import"><div class="ft-micon">📦</div><h4>导入 GGUF</h4><p>导入在 Colab/云端训练好的模型<br><b>⏱ &lt;5分钟 · 无需GPU</b></p></div>
+      </div>
+      <!-- Modelfile sub-panel -->
+      <div class="ft-sub" id="ft-sub-modelfile" style="display:none">
+        <h3>📝 Modelfile 定制</h3>
+        <label class="ft-label">基础模型</label>
+        <select id="mf-base" class="sel-full"></select>
+        <label class="ft-label mt">新模型名称</label>
+        <input type="text" id="mf-name" class="ft-input" placeholder="my-assistant">
+        <label class="ft-label mt">系统提示词</label>
+        <textarea id="mf-sys" class="ft-ta" rows="4" placeholder="你是...的专家助手"></textarea>
+        <label class="ft-label mt">Few-shot 示例 (每行一条 JSON: {"input":"...","output":"..."})</label>
+        <textarea id="mf-examples" class="ft-ta" rows="3" placeholder='{"input":"今天天气如何","output":"今天阳光明媚，适合户外活动"}'></textarea>
+        <div class="ft-params-grid">
+          <label><span>temperature</span><input type="number" id="mf-temp" value="0.7" step="0.1" class="key-num"></label>
+          <label><span>top_p</span><input type="number" id="mf-topp" value="0.9" step="0.05" class="key-num"></label>
+          <label><span>top_k</span><input type="number" id="mf-topk" value="40" class="key-num"></label>
+          <label><span>repeat_penalty</span><input type="number" id="mf-rp" value="1.1" step="0.05" class="key-num"></label>
+        </div>
+        <button class="btn-p" id="btn-mf-create" style="margin-top:12px;width:100%">🚀 创建模型</button>
+        <div id="mf-result" style="display:none" class="ft-result"></div>
+      </div>
+      <!-- LoRA/QLoRA sub-panel -->
+      <div class="ft-sub" id="ft-sub-train" style="display:none">
+        <h3 id="ft-train-title">🧬 QLoRA 微调配置</h3>
+        <div id="ft-deps-check" class="ft-deps"></div>
+        <div id="deps-install-progress" style="display:none;margin-top:6px">
+          <div class="pbar"><div class="pfill" id="deps-pfill"></div></div>
+          <div class="ft-log" id="deps-log" style="max-height:150px"></div>
+        </div>
+        <div id="ft-gpu-check" class="ft-deps" style="display:none"></div>
+        <div id="gpu-fix-progress" style="display:none;margin-top:6px">
+          <div class="pbar"><div class="pfill" id="gpu-fix-pfill"></div></div>
+          <div class="ft-log" id="gpu-fix-log" style="max-height:120px"></div>
+        </div>
+        <label class="ft-label mt">训练环境</label>
+        <select id="tr-python" class="sel-full"><option value="">使用系统 Python</option></select>
+        <label class="ft-label mt">基座模型</label>
+        <div class="mb-custom-input">
+          <input type="text" id="tr-base" class="ft-input" value="Qwen/Qwen2.5-1.5B-Instruct" placeholder="输入 HuggingFace 模型 ID，如 meta-llama/Llama-3.2-1B-Instruct" style="font-family:var(--fm);font-size:12px">
+          <div class="mb-custom-hint">支持任意 HuggingFace 模型 ID · 也可从下方推荐列表中选择 · <a href="https://huggingface.co/models?pipeline_tag=text-generation&sort=trending" target="_blank" style="color:var(--ac)">浏览 HuggingFace ↗</a></div>
+        </div>
+        <div class="mb-toggle-row">
+          <button class="btn-s" id="btn-mb-toggle" style="font-size:10px;padding:3px 10px">📋 展开推荐模型列表</button>
+          <div class="mb-selected" id="mb-selected"></div>
+        </div>
+        <div class="model-browser collapsed" id="model-browser">
+          <div class="mb-filters">
+            <select id="mb-vendor" class="mb-filter"><option value="">全部厂商</option><option value="meta">Meta (Llama)</option><option value="qwen">阿里 (Qwen)</option><option value="google">Google (Gemma)</option><option value="microsoft">Microsoft (Phi)</option><option value="mistral">Mistral</option><option value="deepseek">DeepSeek</option><option value="01ai">零一万物 (Yi)</option><option value="other">其他 (TinyLlama等)</option></select>
+            <select id="mb-size" class="mb-filter"><option value="">全部大小</option><option value="3">≤3B (需≤8GB)</option><option value="8">≤8B (需≤16GB)</option><option value="14">≤14B (需≤24GB)</option><option value="72">大模型 (>14B)</option></select>
+            <select id="mb-access" class="mb-filter"><option value="">全部</option><option value="open">🟢 开放 (无需登录)</option><option value="gated">🔒 受限 (需登录)</option></select>
+          </div>
+          <div class="mb-search"><input type="text" id="mb-search" class="ft-input" placeholder="🔍 搜索模型..." style="padding:5px 8px;font-size:11px"></div>
+          <div class="mb-list" id="mb-list"></div>
+        </div>
+        <label class="ft-label mt">训练数据集</label>
+        <select id="tr-dataset" class="sel-full"><option value="">请先上传数据集</option></select>
+        <label class="ft-label mt">数据集格式</label>
+        <select id="tr-fmt" class="sel-full"><option value="alpaca">Alpaca (instruction/input/output)</option><option value="sharegpt">ShareGPT (conversations)</option><option value="openai">OpenAI (messages)</option></select>
+        <label class="ft-label mt">输出模型名</label>
+        <input type="text" id="tr-name" class="ft-input" placeholder="my-finetune" value="my-finetune">
+        <div class="ft-params-grid">
+          <label><span>LoRA Rank (r)</span><input type="number" id="tr-r" value="16" class="key-num"></label>
+          <label><span>LoRA Alpha</span><input type="number" id="tr-alpha" value="16" class="key-num"></label>
+          <label><span>Epochs</span><input type="number" id="tr-epochs" value="3" class="key-num"></label>
+          <label><span>Batch Size</span><input type="number" id="tr-bs" value="2" class="key-num"></label>
+          <label><span>Learning Rate</span><input type="number" id="tr-lr" value="0.0002" step="0.0001" class="key-num"></label>
+          <label><span>Max Seq Length</span><input type="number" id="tr-seq" value="2048" class="key-num"></label>
+          <label><span>量化方式</span><select id="tr-quant" class="key-num"><option value="q8_0">Q8_0 (最佳质量)</option><option value="q4_k_m">Q4_K_M (平衡)</option><option value="q5_k_m">Q5_K_M</option><option value="f16">F16 (无损)</option></select></label>
+          <label><span>自动注册 Ollama</span><select id="tr-ollama" class="key-num"><option value="1">是</option><option value="0">否</option></select></label>
+        </div>
+        <button class="btn-p" id="btn-start-train" style="margin-top:12px;width:100%">🚀 开始训练</button>
+        <div id="train-progress" style="display:none">
+          <div class="pbar" style="margin-top:10px"><div class="pfill" id="tr-pfill"></div></div>
+          <div class="ft-log" id="train-log"></div>
+          <button class="btn-pull-ctrl btn-pull-danger" id="btn-stop-train" style="margin-top:6px">⏹ 停止训练</button>
+        </div>
+      </div>
+      <!-- Import sub-panel -->
+      <div class="ft-sub" id="ft-sub-import" style="display:none">
+        <h3>📦 导入 GGUF 模型</h3>
+        <p class="desc">上传在 Google Colab / 云端 / 其他机器训练好的 GGUF 文件</p>
+        <input type="file" id="gguf-file" accept=".gguf" class="ft-input">
+        <div id="gguf-upload-progress" style="display:none;margin-top:8px">
+          <div class="pbar"><div class="pfill" id="gguf-pfill"></div></div>
+          <span class="ptxt" id="gguf-ptxt">上传中...</span>
+        </div>
+        <label class="ft-label mt">模型名称</label>
+        <input type="text" id="gguf-name" class="ft-input" placeholder="my-imported-model">
+        <label class="ft-label mt">系统提示词 (可选)</label>
+        <textarea id="gguf-sys" class="ft-ta" rows="2" placeholder="你是..."></textarea>
+        <button class="btn-p" id="btn-import-gguf" style="margin-top:12px;width:100%">📦 导入模型</button>
+        <div id="import-result" style="display:none" class="ft-result"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Datasets -->
+    <div class="ft-pane" id="ft-data">
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📁 上传数据集</h3><p class="desc">支持 JSONL / JSON / CSV 格式</p></div>
+        <div class="ft-upload"><input type="file" id="ds-file" accept=".jsonl,.json,.csv"><button class="btn-p" id="btn-upload-ds">上传</button></div>
+        <div id="ds-upload-progress" style="display:none;margin-top:8px">
+          <div class="pbar"><div class="pfill" id="ds-pfill"></div></div>
+          <span class="ptxt" id="ds-ptxt">上传中...</span>
+        </div>
+        <div id="ds-preview" style="display:none" class="ft-preview"></div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📂 已有数据集</h3><p class="desc">格式与内容预览</p></div>
+        <div id="ds-list"><p class="desc">暂无</p></div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📐 数据集格式示例</h3></div>
+        <div class="ft-fmt-tabs"><button class="ft-fmt active" data-f="alpaca">Alpaca</button><button class="ft-fmt" data-f="sharegpt">ShareGPT</button><button class="ft-fmt" data-f="openai">OpenAI</button></div>
+        <pre class="ft-code" id="fmt-example"></pre>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>🌐 下载 HuggingFace 数据集</h3><p class="desc">输入 HuggingFace 数据集 ID 或链接，自动下载并转换为训练格式</p></div>
+        <div class="ds-custom-dl">
+          <input type="text" id="ds-hf-input" class="ft-input" placeholder="数据集 ID (如 tatsu-lab/alpaca) 或 HuggingFace 链接" style="font-family:var(--fm)">
+          <div class="ds-custom-options">
+            <button class="btn-p" id="btn-ds-custom-dl" style="padding:4px 16px">📥 下载全部数据</button>
+          </div>
+          <div class="mb-custom-hint">支持任意 HuggingFace 数据集 · 通过 Parquet 整包下载，稳定快速 · 自动识别格式并转换为 Alpaca/ShareGPT · <a href="https://huggingface.co/datasets?sort=trending" target="_blank" style="color:var(--ac)">浏览数据集 ↗</a></div>
+        </div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📋 热门开源数据集</h3><p class="desc">点击下载按钮一键获取完整数据集</p></div>
+        <div class="ft-ds-links" id="ft-ds-links"></div>
+        <div id="ds-download-progress" style="display:none;margin-top:8px">
+          <div class="pbar"><div class="pfill" id="dl-pfill"></div></div>
+          <div class="ft-log" id="dl-log" style="max-height:120px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Training Monitor -->
+    <div class="ft-pane" id="ft-train">
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📊 训练监控</h3></div>
+        <div id="ft-monitor">
+          <div class="ft-status-card" id="ft-status-card"><span class="ft-st-icon">⏸</span><span id="ft-st-text">空闲</span></div>
+          <div class="pbar" style="margin-top:10px"><div class="pfill" id="ft-mon-fill"></div></div>
+          <div class="ft-st-info"><span>进度: <b id="ft-mon-pct">0</b>%</span><span>Loss: <b id="ft-mon-loss">-</b></span></div>
+          <div class="ft-log" id="ft-mon-log" style="margin-top:10px"></div>
+          <button class="btn-pull-ctrl btn-pull-danger" id="btn-mon-stop" style="display:none;margin-top:10px">⏹ 停止训练</button>
+        </div>
+      </div>
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>🔄 训练工程 · 断点续训</h3><p class="desc">每次训练自动创建工程，中断后可从 Checkpoint 恢复</p></div>
+        <button class="btn-s" id="btn-refresh-projects" style="margin-bottom:8px">🔄 刷新工程列表</button>
+        <div id="project-list"><p class="desc">暂无训练工程</p></div>
+      </div>
+    </div>
+
+    <!-- Tab: History -->
+    <div class="ft-pane" id="ft-history">
+      <div class="ft-section">
+        <div class="ft-section-head"><h3>📜 微调历史记录</h3><p class="desc">所有成功完成的微调任务记录</p></div>
+        <div id="ft-history-list"><p class="desc">暂无记录</p></div>
+      </div>
+    </div>
+
+    <!-- Tab: Guide -->
+    <div class="ft-pane" id="ft-guide">
+      <div class="ft-guide-content">
+        <div class="ft-section"><h3>🎯 什么是微调？</h3><p>微调是在预训练模型的基础上，用少量特定领域数据继续训练，使模型适应你的具体需求。比如让通用模型变成：客服助手、代码专家、医疗问答、你的写作风格等。</p></div>
+        <div class="ft-section"><h3>📋 四种微调方式对比</h3><table class="ft-guide-tbl"><thead><tr><th>方式</th><th>原理</th><th>显存</th><th>质量</th><th>速度</th></tr></thead><tbody><tr><td><b>Modelfile</b></td><td>系统提示词+示例</td><td>0</td><td>⭐⭐</td><td>秒级</td></tr><tr><td><b>QLoRA</b></td><td>4-bit量化+低秩适配</td><td>6-16GB</td><td>⭐⭐⭐⭐</td><td>1-4h</td></tr><tr><td><b>LoRA</b></td><td>16-bit低秩适配</td><td>24GB+</td><td>⭐⭐⭐⭐⭐</td><td>2-8h</td></tr><tr><td><b>全量微调</b></td><td>更新所有权重</td><td>100GB+</td><td>⭐⭐⭐⭐⭐</td><td>数天</td></tr></tbody></table></div>
+        <div class="ft-section"><h3>📊 数据集质量 > 数量</h3><p>100条高质量数据 > 10000条低质量数据。好的数据集应：格式统一、覆盖边缘案例、示例多样化、输出风格一致。建议从50-100条开始迭代。</p></div>
+        <div class="ft-section"><h3>💡 VRAM 与模型选择</h3><table class="ft-guide-tbl"><thead><tr><th>显存</th><th>QLoRA可训模型</th><th>推荐</th></tr></thead><tbody><tr><td>6-8GB</td><td>0.5B-3B</td><td>Qwen 0.6B, Llama 1B, Gemma 2B</td></tr><tr><td>8-12GB</td><td>1B-7B</td><td>Llama 3B, Phi-3 Mini, Qwen 1.5B</td></tr><tr><td>12-16GB</td><td>3B-8B</td><td>Llama 8B, Qwen 7B, Gemma 9B</td></tr><tr><td>24GB</td><td>7B-13B</td><td>Llama 8B, Mistral 7B, Qwen 14B</td></tr><tr><td>48GB+</td><td>13B-70B</td><td>Llama 70B, Qwen 30B</td></tr></tbody></table></div>
+        <div class="ft-section"><h3>🔗 免费云端训练资源</h3><p><a href="https://colab.research.google.com/" target="_blank">📓 Google Colab (免费 T4 GPU)</a></p><p><a href="https://huggingface.co/docs/peft" target="_blank">🤗 PEFT 官方文档 — LoRA / QLoRA 教程</a></p><p><a href="https://www.kaggle.com/" target="_blank">📊 Kaggle (免费 P100 GPU)</a></p><p><a href="https://lightning.ai/" target="_blank">⚡ Lightning.ai (免费 GPU 额度)</a></p></div>
+        <div class="ft-section"><h3>🏭 完整训练流水线</h3><p>1. 准备数据集 (Alpaca/ShareGPT 格式)<br>2. 配置训练环境 (创建 venv 或选择 conda 环境)<br>3. 选择基础模型 (根据显存)<br>4. 配置参数 (lr=2e-4, epochs=3, r=16)<br>5. 训练 → 导出 LoRA 适配器<br>6. 转换 GGUF → 注册 Ollama<br>7. 在本 GUI 中测试对话</p></div>
+      </div>
+    </div>
+    </div>
+  </div>
+  <!-- Model Workshop Full Page -->
+  <div class="ft-page" id="ov-workshop" style="display:none">
+    <div class="ft-page-header">
+      <div class="ft-page-title"><span class="ft-page-icon">🔧</span><h2>模型工坊</h2></div>
+      <button class="btn-ft-close" id="cl-workshop"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> 返回聊天</button>
+    </div>
+    <div class="ft-page-nav">
+      <button class="ws-tab active" data-tab="ws-models"><span class="ft-tab-icon">📦</span><span class="ft-tab-text">模型管理</span></button>
+      <button class="ws-tab" data-tab="ws-import"><span class="ft-tab-icon">🌐</span><span class="ft-tab-text">HF 导入</span></button>
+      <button class="ws-tab" data-tab="ws-quant"><span class="ft-tab-icon">⚡</span><span class="ft-tab-text">量化转换</span></button>
+      <button class="ws-tab" data-tab="ws-variant"><span class="ft-tab-icon">🔀</span><span class="ft-tab-text">模型变体</span></button>
+      <button class="ws-tab" data-tab="ws-test"><span class="ft-tab-icon">💬</span><span class="ft-tab-text">快速测试</span></button>
+    </div>
+    <div class="ft-page-body">
+      <!-- Tab: Models -->
+      <div class="ws-pane active" id="ws-models">
+        <div class="ft-section">
+          <div class="ft-section-head">
+            <h3>📦 已安装模型</h3>
+            <p class="desc">管理本地 Ollama 模型，查看详情、导出 Modelfile、复制或删除</p>
+          </div>
+          <button class="btn-s" id="btn-ws-refresh" style="margin-bottom:10px">🔄 刷新列表</button>
+          <div id="ws-model-list"><p class="desc">加载中...</p></div>
+        </div>
+        <div class="ft-section" id="ws-detail-section" style="display:none">
+          <div class="ft-section-head"><h3>📋 模型详情</h3></div>
+          <div id="ws-model-detail"></div>
+        </div>
+      </div>
+
+      <!-- Tab: HF Import -->
+      <div class="ws-pane" id="ws-import">
+        <div class="ft-section">
+          <div class="ft-section-head">
+            <h3>🌐 从 HuggingFace 导入模型</h3>
+            <p class="desc">下载 HuggingFace 模型（safetensors），自动量化并注册到 Ollama。支持对任何模型进行任意精度量化。</p>
+          </div>
+          <label class="ft-label">HuggingFace 模型 ID</label>
+          <input type="text" id="ws-hf-model" class="ft-input" placeholder="如 Qwen/Qwen2.5-7B-Instruct" style="font-family:var(--fm)">
+          <div class="mb-custom-hint" style="margin-bottom:8px">输入完整的 HuggingFace 模型 ID · <a href="https://huggingface.co/models?pipeline_tag=text-generation&sort=trending" target="_blank" style="color:var(--ac)">浏览模型 ↗</a> · 受限模型需先在 HF 申请权限并登录</div>
+          <label class="ft-label">Ollama 模型名</label>
+          <input type="text" id="ws-hf-name" class="ft-input" placeholder="my-qwen-7b">
+          <label class="ft-label mt">导入精度</label>
+          <div class="ws-quant-grid" style="grid-template-columns:repeat(3,1fr)">
+            <label class="ws-qopt"><input type="radio" name="hf-qtype" value="q4_k_m" checked><div class="ws-qcard"><b>Q4_K_M</b><span>推荐 · 体积小</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="hf-qtype" value="q5_k_m"><div class="ws-qcard"><b>Q5_K_M</b><span>平衡</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="hf-qtype" value="q8_0"><div class="ws-qcard"><b>Q8_0</b><span>高质量</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="hf-qtype" value="q3_k_m"><div class="ws-qcard"><b>Q3_K_M</b><span>极限压缩</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="hf-qtype" value="f16"><div class="ws-qcard"><b>F16</b><span>无损 (可后续量化)</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="hf-qtype" value="q4_0"><div class="ws-qcard"><b>Q4_0</b><span>经典 4-bit</span></div></label>
+          </div>
+          <button class="btn-p" id="btn-ws-hf-import" style="margin-top:12px;width:100%">🌐 开始导入</button>
+          <div id="ws-hf-result" style="display:none;margin-top:10px">
+            <div class="pbar"><div class="pfill" id="ws-hf-fill"></div></div>
+            <div class="ft-log" id="ws-hf-log" style="margin-top:6px;max-height:200px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Quantize -->
+      <div class="ws-pane" id="ws-quant">
+        <div class="ft-section">
+          <div class="ft-section-head">
+            <h3>⚡ 量化转换</h3>
+            <p class="desc">将高精度模型转换为低精度格式以节省显存和磁盘空间，同时加速推理</p>
+          </div>
+          <label class="ft-label">源模型</label>
+          <select id="ws-q-source" class="sel-full"><option value="">选择模型...</option></select>
+          <div class="ws-q-note">⚠️ Ollama 量化仅支持 <b>F16/F32</b> 源模型。如需对其他模型重新量化，请使用「HF 导入」Tab 从 HuggingFace 直接下载 safetensors 源文件并选择目标精度。</div>
+          <label class="ft-label mt">量化类型</label>
+          <div class="ws-quant-grid" id="ws-quant-types">
+            <label class="ws-qopt"><input type="radio" name="qtype" value="q4_k_m" checked><div class="ws-qcard"><b>Q4_K_M</b><span>推荐 · 体积小 · 质量好</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="qtype" value="q5_k_m"><div class="ws-qcard"><b>Q5_K_M</b><span>平衡 · 较高质量</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="qtype" value="q8_0"><div class="ws-qcard"><b>Q8_0</b><span>最佳质量 · 体积较大</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="qtype" value="q4_0"><div class="ws-qcard"><b>Q4_0</b><span>经典4-bit · 最小体积</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="qtype" value="q3_k_m"><div class="ws-qcard"><b>Q3_K_M</b><span>极限压缩 · 质量有损</span></div></label>
+            <label class="ws-qopt"><input type="radio" name="qtype" value="f16"><div class="ws-qcard"><b>F16</b><span>无损 · 最大体积</span></div></label>
+          </div>
+          <div class="ws-quant-info">
+            <table class="ft-guide-tbl">
+              <thead><tr><th>量化类型</th><th>体积 (7B)</th><th>质量</th><th>速度</th><th>适用场景</th></tr></thead>
+              <tbody>
+                <tr><td>Q4_K_M</td><td>~4.1GB</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>日常使用首选</td></tr>
+                <tr><td>Q5_K_M</td><td>~4.8GB</td><td>⭐⭐⭐⭐½</td><td>⭐⭐⭐⭐</td><td>显存充足时推荐</td></tr>
+                <tr><td>Q8_0</td><td>~7.2GB</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>追求最佳质量</td></tr>
+                <tr><td>Q3_K_M</td><td>~3.3GB</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>显存紧张</td></tr>
+                <tr><td>F16</td><td>~13.5GB</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐</td><td>无损存储 · 后续量化</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <label class="ft-label mt">新模型名称</label>
+          <input type="text" id="ws-q-name" class="ft-input" placeholder="my-model-q4km">
+          <button class="btn-p" id="btn-ws-quantize" style="margin-top:12px;width:100%">⚡ 开始量化</button>
+          <div id="ws-q-result" style="display:none;margin-top:10px" class="ft-result"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Variant -->
+      <div class="ws-pane" id="ws-variant">
+        <div class="ft-section">
+          <div class="ft-section-head">
+            <h3>🔀 创建模型变体</h3>
+            <p class="desc">基于已有模型，修改系统提示词和参数创建新版本（零开销 · 秒级完成）</p>
+          </div>
+          <label class="ft-label">基础模型</label>
+          <select id="ws-v-base" class="sel-full"><option value="">选择模型...</option></select>
+          <label class="ft-label mt">新模型名称</label>
+          <input type="text" id="ws-v-name" class="ft-input" placeholder="my-custom-model">
+          <label class="ft-label mt">系统提示词</label>
+          <textarea id="ws-v-sys" class="ft-ta" rows="4" placeholder="你是一个专业的...助手，擅长..."></textarea>
+          <div class="ws-presets" style="margin-top:6px">
+            <span class="desc" style="margin:0;font-size:10px">快速模板:</span>
+            <button class="tag" onclick="$('#ws-v-sys').value='你是一个专业的编程助手，擅长Python、JavaScript等主流语言。请用简洁清晰的代码回答问题，并附带必要的注释说明。'">💻 编程助手</button>
+            <button class="tag" onclick="$('#ws-v-sys').value='你是一个专业的中英文翻译官。请准确、流畅地翻译用户提供的文本，保持原文的语气和风格。'">🌐 翻译专家</button>
+            <button class="tag" onclick="$('#ws-v-sys').value='你是一个数据分析专家。请帮助用户分析数据、解读结果，并给出可操作的建议。回答时引用具体数据。'">📊 数据分析</button>
+            <button class="tag" onclick="$('#ws-v-sys').value='你是一个创意写作助手。请根据用户的要求创作高质量的文章、故事或文案，注重文字的美感和感染力。'">✍️ 创意写作</button>
+          </div>
+          <div class="ft-params-grid" style="margin-top:14px">
+            <label><span>temperature</span><input type="number" id="ws-v-temp" value="0.7" step="0.1" class="key-num"></label>
+            <label><span>top_p</span><input type="number" id="ws-v-topp" value="0.9" step="0.05" class="key-num"></label>
+            <label><span>repeat_penalty</span><input type="number" id="ws-v-rp" value="1.1" step="0.05" class="key-num"></label>
+            <label><span>num_ctx</span><input type="number" id="ws-v-ctx" value="4096" step="512" class="key-num"></label>
+          </div>
+          <button class="btn-p" id="btn-ws-variant" style="margin-top:12px;width:100%">🔀 创建变体</button>
+          <div id="ws-v-result" style="display:none;margin-top:10px" class="ft-result"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Test -->
+      <div class="ws-pane" id="ws-test">
+        <div class="ft-section">
+          <div class="ft-section-head">
+            <h3>💬 快速测试</h3>
+            <p class="desc">快速验证模型效果，无需切换到聊天界面</p>
+          </div>
+          <div class="ws-test-row">
+            <select id="ws-t-model" class="sel-full" style="flex:1"><option value="">选择模型...</option></select>
+          </div>
+          <label class="ft-label mt">测试提示词</label>
+          <textarea id="ws-t-prompt" class="ft-ta" rows="3" placeholder="你好！请简单介绍一下你自己。"></textarea>
+          <div class="ws-test-presets" style="margin-top:6px">
+            <button class="tag" onclick="$('#ws-t-prompt').value='你好！请简单介绍一下你自己。'">👋 自我介绍</button>
+            <button class="tag" onclick="$('#ws-t-prompt').value='请用Python写一个冒泡排序。'">💻 代码能力</button>
+            <button class="tag" onclick="$('#ws-t-prompt').value='9.11和9.8，哪个大？请解释你的推理过程。'">🧮 数学推理</button>
+            <button class="tag" onclick="$('#ws-t-prompt').value='请将以下文本翻译成英文：\n春眠不觉晓，处处闻啼鸟。'">🌐 翻译测试</button>
+          </div>
+          <button class="btn-p" id="btn-ws-test" style="margin-top:12px;width:100%">💬 发送测试</button>
+          <div id="ws-t-result" style="display:none;margin-top:12px">
+            <div class="ft-section-head"><h3>📤 模型回复</h3></div>
+            <div id="ws-t-response" class="ws-test-response"></div>
+            <div id="ws-t-stats" class="ws-test-stats"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctx-menu" id="ctx-menu" style="display:none"><button class="ctx-item" id="ctx-pin">📌 置顶</button><button class="ctx-item" id="ctx-rename">✏️ 重命名</button><button class="ctx-item ctx-danger" id="ctx-delete">🗑️ 删除</button></div>
+
+  <!-- ==================== Pretrain Lab ==================== -->
+  <div class="ft-page" id="ov-pretrain" style="display:none">
+    <div class="ft-page-header">
+      <div class="ft-page-title"><span class="ft-page-icon">🧪</span><h2>训练实验室</h2></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <select id="pt-project-sel" class="sel-model" style="min-width:200px"><option value="">新建项目...</option></select>
+        <button class="btn-p" id="btn-pt-new-proj" style="padding:5px 12px;font-size:12px">+ 新建</button>
+        <button class="btn-p" id="btn-pt-del-proj" style="padding:5px 12px;font-size:12px;background:var(--err);display:none" title="删除当前项目">🗑️ 删除</button>
+        <button class="btn-ft-close" id="cl-pretrain"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> 返回聊天</button>
+      </div>
+    </div>
+    <div class="ft-page-nav">
+      <button class="pt-tab active" data-tab="pt-arch"><span class="ft-tab-icon">🏗️</span><span class="ft-tab-text">架构设计</span></button>
+      <button class="pt-tab" data-tab="pt-token"><span class="ft-tab-icon">📝</span><span class="ft-tab-text">词表构建</span></button>
+      <button class="pt-tab" data-tab="pt-data"><span class="ft-tab-icon">📊</span><span class="ft-tab-text">数据准备</span></button>
+      <button class="pt-tab" data-tab="pt-train"><span class="ft-tab-icon">🚀</span><span class="ft-tab-text">训练监控</span></button>
+      <button class="pt-tab" data-tab="pt-chat"><span class="ft-tab-icon">💬</span><span class="ft-tab-text">模型对话</span></button>
+      <button class="pt-tab" data-tab="pt-play"><span class="ft-tab-icon">🔬</span><span class="ft-tab-text">实验与导出</span></button>
+    </div>
+
+    <!-- ====== Training Mode Toggle (prominent bar) ====== -->
+    <div id="pt-workflow-status" class="pt-workflow-bar"></div>
+    <div class="pt-mode-bar" id="pt-mode-bar">
+      <div class="pt-mode-bar-inner">
+        <button class="pt-mode-btn active" id="pt-mode-pretrain" data-mode="pretrain" onclick="ptSwitchTrainMode('pretrain')">
+          <span class="pt-mode-icon">📚</span>
+          <span class="pt-mode-label">预训练 Pretrain</span>
+          <span class="pt-mode-desc">从零学习语言</span>
+        </button>
+        <button class="pt-mode-btn" id="pt-mode-sft" data-mode="sft" onclick="ptSwitchTrainMode('sft')">
+          <span class="pt-mode-icon">💬</span>
+          <span class="pt-mode-label">SFT 对话微调</span>
+          <span class="pt-mode-desc">学会一问一答</span>
+        </button>
+      </div>
+      <div class="pt-mode-hint" id="pt-mode-hint">当前模式：<strong>预训练</strong> — 用大量文本教模型学习语言规律</div>
+    </div>
+
+    <div class="ft-page-body" id="pt-body">
+
+      <!-- Tab: Architecture Design -->
+      <div class="pt-pane active" id="pt-arch">
+
+        <!-- Template selector -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📐 预设模板</h3><p class="desc">选择一个经典架构作为起点，然后在下方自由修改</p></div>
+          <div class="pt-templates" id="pt-templates">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Architecture editor -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>🏗️ 模型架构编辑器</h3><p class="desc">拖拽排列模块，点击展开配置。右侧实时显示参数统计</p></div>
+          <div class="pt-arch-editor">
+            <!-- Left: component palette (categorized) -->
+            <div class="pt-palette" id="pt-palette">
+              <div class="pt-palette-title">组件面板</div>
+              <!-- Core -->
+              <div class="pt-palette-cat">🧱 核心层</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="embedding"><span class="pt-ci">📦</span> Embedding</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="attention"><span class="pt-ci">👁️</span> Self-Attention</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="cross_attn"><span class="pt-ci">🔀</span> Cross-Attention</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="ffn"><span class="pt-ci">⚡</span> FFN</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="linear"><span class="pt-ci">📐</span> Linear</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="lm_head"><span class="pt-ci">🎯</span> LM Head</div>
+              <!-- Norm -->
+              <div class="pt-palette-cat">📏 归一化</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="norm_pre"><span class="pt-ci">📏</span> Pre-Norm</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="norm_post"><span class="pt-ci">📏</span> Post-Norm</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="norm_final"><span class="pt-ci">📏</span> Final Norm</div>
+              <!-- Connect -->
+              <div class="pt-palette-cat">🔗 连接与流控</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="residual"><span class="pt-ci">➰</span> Residual Add</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="dropout"><span class="pt-ci">💧</span> Dropout</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="skip_connect"><span class="pt-ci">⏭️</span> Skip Connect</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="gate"><span class="pt-ci">🚪</span> Gating</div>
+              <!-- Expert -->
+              <div class="pt-palette-cat">🧪 专家/扩展</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="moe"><span class="pt-ci">🧪</span> MoE Layer</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="parallel_attn"><span class="pt-ci">⚡👁️</span> Parallel</div>
+              <div class="pt-palette-item" draggable="true" data-ctype="kv_cache"><span class="pt-ci">💾</span> KV Cache</div>
+              <!-- Quick patterns -->
+              <div class="pt-palette-cat" style="margin-top:6px">📋 快速插入</div>
+              <div class="pt-palette-item pt-pattern-btn" onclick="ptInsertPattern('pre_norm_attn')">
+                <span class="pt-ci">🔄</span> Pre-Norm + Attn
+              </div>
+              <div class="pt-palette-item pt-pattern-btn" onclick="ptInsertPattern('post_norm_block')">
+                <span class="pt-ci">🔄</span> Post-Norm Block
+              </div>
+              <div class="pt-palette-item pt-pattern-btn" onclick="ptInsertPattern('moe_layer')">
+                <span class="pt-ci">🔄</span> MoE 替换 FFN
+              </div>
+              <div class="pt-palette-hint">拖拽组件到画布<br>或点击画布中的 ＋ 按钮</div>
+            </div>
+
+            <!-- Center: model structure (drag-and-drop stack) -->
+            <div class="pt-canvas-wrap">
+              <div class="pt-canvas" id="pt-canvas">
+                <!-- filled by JS -->
+              </div>
+            </div>
+
+            <!-- Right: stats panel -->
+            <div class="pt-stats-panel" id="pt-stats">
+              <div class="pt-stat-card">
+                <div class="pt-stat-label">总参数量</div>
+                <div class="pt-stat-value" id="pt-s-params">—</div>
+              </div>
+              <div class="pt-stat-card">
+                <div class="pt-stat-label">训练显存 (FP16)</div>
+                <div class="pt-stat-value" id="pt-s-vram-train">—</div>
+              </div>
+              <div class="pt-stat-card">
+                <div class="pt-stat-label">推理显存 (FP16)</div>
+                <div class="pt-stat-value" id="pt-s-vram-infer">—</div>
+              </div>
+              <div class="pt-stat-sep"></div>
+              <div class="pt-stat-card pt-stat-sm">
+                <div class="pt-stat-label">Embedding</div>
+                <div class="pt-stat-value" id="pt-s-emb">—</div>
+              </div>
+              <div class="pt-stat-card pt-stat-sm">
+                <div class="pt-stat-label">每层参数</div>
+                <div class="pt-stat-value" id="pt-s-perlayer">—</div>
+              </div>
+              <div class="pt-stat-card pt-stat-sm">
+                <div class="pt-stat-label">Head 维度</div>
+                <div class="pt-stat-value" id="pt-s-headdim">—</div>
+              </div>
+              <div class="pt-stat-sep"></div>
+              <div id="pt-issues" class="pt-issues"></div>
+              <button class="btn-p" id="btn-pt-save-arch" style="width:100%;margin-top:10px">💾 保存架构</button>
+              <div style="display:flex;gap:4px;margin-top:4px">
+                <button class="btn-p" style="flex:1;font-size:10px;padding:4px 6px;background:var(--bg3);color:var(--t2);border:1px solid var(--br)" onclick="ptExportArchJSON()">📤 导出 JSON</button>
+                <button class="btn-p" style="flex:1;font-size:10px;padding:4px 6px;background:var(--bg3);color:var(--t2);border:1px solid var(--br)" onclick="ptImportArchJSON()">📥 导入 JSON</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Config form (expanded when clicking a block) -->
+        <div class="ft-section" id="pt-config-section" style="display:none">
+          <div class="ft-section-head"><h3 id="pt-config-title">⚙️ 模块配置</h3></div>
+          <div id="pt-config-body"></div>
+        </div>
+
+      </div>
+
+      <!-- Tab: Tokenizer -->
+      <div class="pt-pane" id="pt-token">
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📝 Tokenizer 配置</h3><p class="desc">选择现有的 tokenizer 或从你的数据集训练一个新的。Tokenizer 决定了模型如何将文本切分为 token。</p></div>
+
+          <!-- Python env (shared) -->
+          <div style="margin-bottom:12px;padding:8px 12px;background:var(--bg0);border-radius:8px;border:1px solid var(--br);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--t3)">🐍 Python 环境:</span>
+            <select id="pt-tok-python" class="ft-input" style="flex:1;min-width:180px;max-width:350px;font-size:11px;padding:4px 8px" onchange="PT.selectedPython=this.value;document.getElementById('pt-tr-python').value=this.value">
+              <option value="">系统 Python</option>
+            </select>
+            <span style="font-size:10px;color:var(--t4)">下载和训练 Tokenizer 需要 Python 环境</span>
+          </div>
+
+          <div class="pt-tok-modes">
+            <button class="pt-tok-mode active" data-mode="pretrained" onclick="ptSwitchTokMode('pretrained')">📦 使用预训练 Tokenizer</button>
+            <button class="pt-tok-mode" data-mode="custom" onclick="ptSwitchTokMode('custom')">🔧 训练新 Tokenizer</button>
+          </div>
+
+          <!-- Pretrained mode -->
+          <div class="pt-tok-panel" id="pt-tok-pretrained">
+            <div class="pt-tok-grid" id="pt-tok-list">
+              <!-- filled by JS -->
+            </div>
+            <div style="margin-top:12px">
+              <label class="ft-label">或输入自定义 HuggingFace 模型 ID</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="pt-tok-custom-src" class="ft-input" placeholder="例如: meta-llama/Llama-2-7b-hf" style="flex:1">
+                <button class="btn-p" id="btn-pt-tok-download">📥 下载</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom training mode -->
+          <div class="pt-tok-panel" id="pt-tok-custom" style="display:none">
+            <div class="pt-cfg-hint" style="margin-bottom:12px">从项目数据集中训练一个全新的 BPE tokenizer。需要先在「数据准备」标签页添加训练数据。需要安装 <code>tokenizers</code> 库。</div>
+            <div class="pt-cfg-row">
+              <label class="ft-label">词表大小 (vocab_size)</label>
+              <input type="number" id="pt-tok-vocab" class="ft-input" value="8000" min="100" max="100000" step="1000">
+              <div class="pt-cfg-hint">小模型建议 4000-16000，更大的词表能减少 token 数量但增加 Embedding 参数</div>
+            </div>
+            <div class="pt-cfg-row">
+              <label class="ft-label">最小词频 (min_frequency)</label>
+              <input type="number" id="pt-tok-minfreq" class="ft-input" value="2" min="1" max="100">
+              <div class="pt-cfg-hint">出现次数低于此值的 token 不会被加入词表</div>
+            </div>
+            <button class="btn-p" id="btn-pt-tok-train" style="margin-top:8px">🔧 开始训练 Tokenizer</button>
+          </div>
+
+          <!-- Status & result -->
+          <div id="pt-tok-status" class="pt-tok-status" style="display:none"></div>
+        </div>
+
+        <!-- Preview section -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>🔍 分词预览</h3><p class="desc">输入文本查看分词效果，不同颜色代表不同的 token</p></div>
+          <textarea id="pt-tok-input" class="ft-input" rows="3" placeholder="输入任意文本来测试分词效果...&#10;例如：Hello world! 你好世界！"></textarea>
+          <button class="btn-p" id="btn-pt-tok-preview" style="margin-top:8px">分词预览</button>
+          <div id="pt-tok-preview-result" style="display:none;margin-top:12px">
+            <div class="pt-tok-tokens" id="pt-tok-tokens"></div>
+            <div class="pt-tok-preview-stats" id="pt-tok-preview-stats"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Dataset -->
+      <div class="pt-pane" id="pt-data">
+        <div class="ft-section">
+          <!-- Pretrain data header -->
+          <div id="pt-data-pretrain-head" class="ft-section-head"><h3>📊 数据集管理</h3><p class="desc">为预训练准备数据。可以上传文本文件、直接粘贴文本、或从 HuggingFace 下载。</p></div>
+          <!-- SFT data header (hidden by default) -->
+          <div id="pt-data-sft-head" class="ft-section-head" style="display:none"><h3>💬 SFT 对话数据</h3><p class="desc">上传对话格式的数据。支持 JSONL 格式，每行一条对话。</p></div>
+
+          <!-- SFT format guide (hidden by default) -->
+          <div id="pt-sft-format-guide" style="display:none;margin-bottom:16px;padding:14px;background:var(--bg0);border-radius:10px;border:1px solid var(--br)">
+            <h4 style="font-size:13px;color:var(--t1);margin-bottom:8px">📋 数据格式说明</h4>
+            <p class="desc" style="margin-bottom:8px">SFT 训练需要对话格式的 JSONL 文件，每行一条对话：</p>
+            <pre style="background:var(--bg1);padding:10px;border-radius:6px;font-size:11px;overflow-x:auto;color:var(--t1);margin-bottom:8px;white-space:pre-wrap">{"conversations": [{"role": "user", "content": "法国的首都是哪里？"}, {"role": "assistant", "content": "法国的首都是巴黎。"}]}</pre>
+            <p class="desc" style="margin-bottom:4px">也支持 Alpaca 格式（<code>instruction/input/output</code>）、ShareGPT 格式等，上传后可一键转换。</p>
+            <div style="margin-top:8px">
+              <label class="ft-label">对话模板 (Chat Template)</label>
+              <select id="pt-sft-template" class="ft-input" style="max-width:260px">
+                <option value="chatml" selected>ChatML (推荐 — &lt;|im_start|&gt;/&lt;|im_end|&gt;)</option>
+                <option value="llama">Llama ([INST]/[/INST])</option>
+                <option value="simple">Simple (### User:/### Assistant:)</option>
+              </select>
+              <div class="pt-cfg-hint">决定对话数据如何被格式化为 token 序列。ChatML 是最通用的格式。</div>
+            </div>
+          </div>
+
+          <!-- Upload / Paste -->
+          <div class="pt-data-actions">
+            <div class="pt-data-action">
+              <label class="btn-p" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                📁 上传文本文件
+                <input type="file" id="pt-data-file" accept=".txt,.jsonl,.json,.csv,.tsv" style="display:none" multiple>
+              </label>
+              <span class="pt-data-hint">.txt / .jsonl / .json / .csv</span>
+            </div>
+            <button class="btn-p" id="btn-pt-paste" style="background:var(--bg3);color:var(--t1);border:1px solid var(--sfB)">📋 粘贴文本</button>
+            <button class="btn-p" id="btn-pt-hf-dl" style="background:var(--bg3);color:var(--t1);border:1px solid var(--sfB)">🤗 从 HuggingFace 下载</button>
+          </div>
+
+          <!-- Paste panel (hidden by default) -->
+          <div id="pt-paste-panel" style="display:none;margin-top:12px">
+            <label class="ft-label">文件名</label>
+            <input type="text" id="pt-paste-name" class="ft-input" placeholder="my_text.txt" style="margin-bottom:8px">
+            <label class="ft-label">粘贴文本内容</label>
+            <textarea id="pt-paste-text" class="ft-input" rows="6" placeholder="将你的训练文本粘贴在这里...&#10;可以是小说、文章、对话、代码——任何你想让模型学习的文本。"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn-p" id="btn-pt-paste-save">💾 保存</button>
+              <button class="btn-p" id="btn-pt-paste-cancel" style="background:var(--bg3);color:var(--t2);border:1px solid var(--sfB)">取消</button>
+            </div>
+          </div>
+
+          <!-- HF download panel (hidden by default) -->
+          <div id="pt-hf-panel" style="display:none;margin-top:12px">
+            <label class="ft-label">HuggingFace 数据集 ID</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input type="text" id="pt-hf-id" class="ft-input" placeholder="例如: roneneldan/TinyStories" style="flex:1">
+              <button class="btn-p" id="btn-pt-hf-start">📥 下载</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <div style="flex:1"><label class="ft-label">保存文件名</label><input type="text" id="pt-hf-fname" class="ft-input" value="dataset.txt"></div>
+              <div style="flex:1"><label class="ft-label">最大条数 (0=全部)</label><input type="number" id="pt-hf-maxrows" class="ft-input" value="0" min="0" step="10000"></div>
+            </div>
+            <div id="pt-hf-progress" style="display:none" class="pt-progress-box">
+              <div class="pt-progress-bar"><div class="pt-progress-fill" id="pt-hf-fill"></div></div>
+              <div id="pt-hf-log" class="pt-progress-log"></div>
+            </div>
+          </div>
+
+          <!-- Dataset list -->
+          <div style="margin-top:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <h4 style="font-size:13px;color:var(--t2)">📂 项目数据集</h4>
+              <button class="btn-p" style="font-size:11px;padding:3px 10px;background:var(--bg3);color:var(--t2);border:1px solid var(--sfB)" id="btn-pt-ds-refresh">🔄 刷新</button>
+            </div>
+            <div id="pt-ds-list" class="pt-ds-list"><p class="desc">请先选择或创建一个项目</p></div>
+          </div>
+        </div>
+
+        <!-- Recommended datasets -->
+        <div class="ft-section" id="pt-rec-pretrain-section">
+          <div class="ft-section-head"><h3>🌟 推荐数据集</h3><p class="desc">适合教育和实验的经典预训练数据集</p></div>
+          <div id="pt-rec-datasets" class="pt-rec-grid">
+            <!-- filled by JS -->
+          </div>
+        </div>
+        <!-- SFT recommended datasets (hidden by default) -->
+        <div class="ft-section" id="pt-rec-sft-section" style="display:none">
+          <div class="ft-section-head"><h3>🌟 推荐 SFT 数据集</h3><p class="desc">适合对话微调的经典指令/对话数据集</p></div>
+          <div id="pt-rec-sft-datasets" class="pt-rec-grid">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Data preview -->
+        <div class="ft-section" id="pt-ds-preview-section" style="display:none">
+          <div class="ft-section-head"><h3>🔎 数据预览</h3><p class="desc" id="pt-ds-preview-name"></p></div>
+          <div id="pt-ds-preview" class="pt-ds-preview-box"></div>
+          <div id="pt-ds-stats" class="pt-ds-stats"></div>
+        </div>
+
+        <!-- Process dataset -->
+        <div class="ft-section">
+          <!-- Pretrain processing -->
+          <div id="pt-proc-pretrain">
+            <div class="ft-section-head"><h3>⚙️ 数据预处理</h3><p class="desc">将文本数据分词并打包为训练格式。需要先配置好 Tokenizer。</p></div>
+            <div style="margin-bottom:10px">
+              <label class="ft-label">选择要处理的数据集文件</label>
+              <div id="pt-proc-file-list" class="pt-proc-file-list"><span class="desc">请先添加数据集</span></div>
+            </div>
+            <!-- Column selector panel (shown when structured file selected) -->
+            <div id="pt-col-selector-panel" style="display:none;margin-bottom:12px;padding:12px;background:var(--bg0);border-radius:8px;border:1px solid var(--sfB)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-size:12px;font-weight:600;color:var(--t2)">📋 列选择 — <span id="pt-col-filename" style="color:var(--ac)"></span></span>
+                <button class="btn-p" style="font-size:10px;padding:2px 8px;background:var(--bg3);color:var(--t3);border:1px solid var(--br)" onclick="document.getElementById('pt-col-selector-panel').style.display='none'">✕ 关闭</button>
+              </div>
+              <p class="desc" style="margin-bottom:8px">选择要用于预训练的文本列。多列的内容会被合并为一条文本。</p>
+              <div id="pt-col-list" class="pt-proc-file-list"></div>
+              <div id="pt-col-preview" style="margin-top:8px;font-size:11px;color:var(--t3);max-height:120px;overflow:auto;background:var(--bg2);padding:8px;border-radius:6px;display:none"></div>
+            </div>
+            <div class="pt-cfg-row">
+              <label class="ft-label">最大序列长度</label>
+              <input type="number" id="pt-proc-seqlen" class="ft-input" value="512" min="32" max="32768" step="64">
+              <div class="pt-cfg-hint">每个训练样本的 token 数量。应与架构设计中的 max_seq_len 一致</div>
+            </div>
+            <button class="btn-p" id="btn-pt-process">🔄 开始预处理</button>
+            <button class="btn-p" id="btn-pt-process-append" style="display:none;margin-left:8px;background:var(--bg3);color:var(--ac);border:1px solid var(--sfB)">➕ 补充数据并重新处理</button>
+          </div>
+          <!-- SFT processing (hidden by default) -->
+          <div id="pt-proc-sft" style="display:none">
+            <div class="ft-section-head"><h3>⚙️ SFT 数据预处理</h3><p class="desc">将对话数据分词并生成训练 mask。只有 assistant 的回复部分会被用于计算 loss。</p></div>
+            <div style="margin-bottom:10px">
+              <label class="ft-label">选择要处理的对话数据文件</label>
+              <div id="pt-sft-proc-file-list" class="pt-proc-file-list"><span class="desc">请先添加对话数据集（JSONL 格式）</span></div>
+            </div>
+            <div class="pt-cfg-row">
+              <label class="ft-label">最大序列长度</label>
+              <input type="number" id="pt-sft-proc-seqlen" class="ft-input" value="512" min="32" max="32768" step="64">
+              <div class="pt-cfg-hint">每条对话被截断或填充到这个长度</div>
+            </div>
+            <button class="btn-p" id="btn-pt-process-sft">🔄 开始 SFT 预处理</button>
+            <button class="btn-p" id="btn-pt-process-sft-append" style="display:none;margin-left:8px;background:var(--bg3);color:var(--ac);border:1px solid var(--sfB)">➕ 补充数据并重新处理</button>
+            <!-- Convert format button -->
+            <button class="btn-p" id="btn-pt-convert-sft" style="background:var(--bg3);color:var(--t1);border:1px solid var(--sfB);margin-left:8px">🔄 格式转换（Alpaca/JSON→JSONL）</button>
+          </div>
+          <div id="pt-proc-result" style="display:none;margin-top:12px"></div>
+
+          <!-- Processed data info -->
+          <div id="pt-processed-info" style="margin-top:16px"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Training -->
+      <div class="pt-pane" id="pt-train">
+        <!-- Training Config -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>⚙️ 训练配置</h3><p class="desc">配置训练超参数。不确定的参数可以使用默认值。</p></div>
+
+          <!-- Environment + Hardware Detection (mirrors fine-tuning center) -->
+          <div style="margin-bottom:16px;padding:12px;background:var(--bg0);border-radius:8px;border:1px solid var(--br)">
+            <label class="ft-label" style="font-size:13px;font-weight:600">🖥️ 硬件信息</label>
+            <div id="pt-hw-info" style="margin:6px 0" class="desc">🔍 正在检测硬件...</div>
+
+            <label class="ft-label" style="margin-top:10px">🐍 训练环境</label>
+            <select id="pt-tr-python" class="ft-input" style="max-width:400px">
+              <option value="">系统 Python</option>
+            </select>
+            <div class="pt-cfg-hint">选择安装了 PyTorch (GPU 版) 的 Python 环境。可在微调中心的「训练环境」标签页创建新环境。</div>
+
+            <label class="ft-label" style="margin-top:10px">🎮 训练设备</label>
+            <select id="pt-tr-device" class="ft-input" style="max-width:320px">
+              <option value="auto">🔄 自动检测 (推荐)</option>
+              <option value="cpu">💻 CPU (仅测试用，非常慢)</option>
+            </select>
+            <div class="pt-cfg-hint">选择 GPU 可大幅加速训练。若未检测到 GPU，请在微调中心创建带 CUDA 的训练环境。</div>
+          </div>
+
+          <div class="pt-train-grid">
+            <div class="pt-cfg-row"><label class="ft-label">学习率 (learning_rate)</label><input type="number" id="pt-tr-lr" class="ft-input" value="3e-4" step="1e-5"><div class="pt-cfg-hint">推荐 1e-4 ~ 5e-4</div></div>
+            <div class="pt-cfg-row"><label class="ft-label">Batch Size</label><input type="number" id="pt-tr-bs" class="ft-input" value="32" min="1" max="1024"><div class="pt-cfg-hint">每步处理的序列数。受显存限制</div></div>
+            <div class="pt-cfg-row"><label class="ft-label">梯度累积步数</label><input type="number" id="pt-tr-accum" class="ft-input" value="4" min="1" max="64"><div class="pt-cfg-hint">等效 batch = batch_size × 梯度累积</div></div>
+            <div class="pt-cfg-row"><label class="ft-label">最大训练步数</label><input type="number" id="pt-tr-steps" class="ft-input" value="5000" min="100" max="1000000" step="500"></div>
+            <div class="pt-cfg-row"><label class="ft-label">Warmup 步数</label><input type="number" id="pt-tr-warmup" class="ft-input" value="200" min="0" max="10000"></div>
+            <div class="pt-cfg-row"><label class="ft-label">权重衰减 (weight_decay)</label><input type="number" id="pt-tr-wd" class="ft-input" value="0.1" step="0.01" min="0" max="1"></div>
+            <div class="pt-cfg-row"><label class="ft-label">梯度裁剪 (grad_clip)</label><input type="number" id="pt-tr-clip" class="ft-input" value="1.0" step="0.1"></div>
+            <div class="pt-cfg-row"><label class="ft-label">学习率调度器</label><select id="pt-tr-sched" class="ft-input"><option value="cosine" selected>Cosine</option><option value="constant">Constant</option></select></div>
+            <div class="pt-cfg-row"><label class="ft-label">保存间隔 (步)</label><input type="number" id="pt-tr-save" class="ft-input" value="500" min="10"></div>
+            <div class="pt-cfg-row"><label class="ft-label">样本间隔 (步)</label><input type="number" id="pt-tr-sample" class="ft-input" value="200" min="10"><div class="pt-cfg-hint">每隔 N 步自动用模型生成文本</div></div>
+          </div>
+          <div class="pt-cfg-row" style="margin-top:8px"><label class="ft-label">验证评估间隔 (步)</label><input type="number" id="pt-tr-eval" class="ft-input" value="500" min="10"><div class="pt-cfg-hint">每隔 N 步在验证集上计算 loss，用 5% 的数据做验证</div></div>
+          <div class="pt-cfg-row" style="margin-top:8px"><label class="ft-label">试说话提示词 (逗号分隔)</label><input type="text" id="pt-tr-prompts" class="ft-input" value="Once upon a time,从前有一个,人工智能的未来,The meaning of life is" placeholder="多个提示词用逗号分隔"></div>
+          <div class="pt-cfg-row" style="margin-top:8px"><label class="ft-label" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="pt-tr-fp16" checked> 使用 FP16 混合精度</label></div>
+
+          <!-- DDP config -->
+          <div class="pt-cfg-row" style="margin-top:8px">
+            <label class="ft-label" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="pt-tr-ddp"> 多卡分布式训练 (DDP)</label>
+            <div class="pt-cfg-hint">需要多张 GPU。数据并行，每张卡训练一部分数据</div>
+          </div>
+          <div id="pt-tr-ddp-cfg" style="display:none;margin-top:8px"><label class="ft-label">GPU IDs (逗号分隔)</label><input type="text" id="pt-tr-gpus" class="ft-input" value="0,1" placeholder="0,1,2,3"></div>
+
+          <!-- SFT-specific config (hidden by default) -->
+          <div id="pt-tr-sft-cfg" style="display:none;margin-top:12px;padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(168,85,247,.08));border-radius:10px;border:1px solid rgba(99,102,241,.2)">
+            <h4 style="font-size:13px;color:var(--t1);margin-bottom:10px">💬 SFT 对话微调设置</h4>
+            <div class="pt-cfg-row">
+              <label class="ft-label">基座模型 Checkpoint</label>
+              <select id="pt-tr-base-ckpt" class="ft-input" style="max-width:400px">
+                <option value="">不加载（从随机初始化开始）</option>
+              </select>
+              <div class="pt-cfg-hint">选择预训练阶段产出的 checkpoint 作为 SFT 的起点。<strong>强烈建议先预训练再做 SFT</strong>。</div>
+            </div>
+            <div class="pt-cfg-row" style="margin-top:8px">
+              <label class="ft-label">对话模板</label>
+              <span id="pt-tr-sft-template-display" style="font-size:12px;color:var(--accent);font-weight:500">ChatML</span>
+              <div class="pt-cfg-hint">在「数据准备」标签页中设置。训练和推理会使用相同的模板。</div>
+            </div>
+            <div style="margin-top:8px;padding:8px 12px;background:rgba(251,191,36,.1);border-radius:6px;border:1px solid rgba(251,191,36,.2)">
+              <p style="font-size:11px;color:var(--t2);margin:0">💡 <strong>SFT 训练建议：</strong>学习率降到 1e-5 ~ 5e-5，步数 500~2000 通常就够，batch_size 可以更小 (4-16)。</p>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="btn-p" id="btn-pt-start-train">🚀 开始训练</button>
+            <button class="btn-p" id="btn-pt-stop-train" style="background:var(--err);display:none">⏹ 停止训练</button>
+          </div>
+        </div>
+
+        <!-- Live Monitor -->
+        <div class="ft-section" id="pt-monitor-section" style="display:none">
+          <div class="ft-section-head"><h3>📊 训练监控</h3></div>
+          <div class="pt-monitor-stats" id="pt-mon-stats">
+            <div class="pt-mon-stat"><span class="label">步数</span><span class="val" id="pt-mon-step">0 / 0</span></div>
+            <div class="pt-mon-stat"><span class="label">Train Loss</span><span class="val" id="pt-mon-loss">—</span></div>
+            <div class="pt-mon-stat"><span class="label">Val Loss</span><span class="val" id="pt-mon-val-loss">—</span></div>
+            <div class="pt-mon-stat"><span class="label">学习率</span><span class="val" id="pt-mon-lr">—</span></div>
+            <div class="pt-mon-stat"><span class="label">速度</span><span class="val" id="pt-mon-speed">—</span></div>
+            <div class="pt-mon-stat"><span class="label">设备</span><span class="val" id="pt-mon-device">—</span></div>
+            <div class="pt-mon-stat"><span class="label">状态</span><span class="val" id="pt-mon-status">等待中</span></div>
+          </div>
+          <!-- Progress bar -->
+          <div class="pt-progress-bar" style="margin:12px 0"><div class="pt-progress-fill" id="pt-mon-fill"></div></div>
+          <!-- Loss chart (canvas) -->
+          <div class="pt-chart-wrap"><canvas id="pt-loss-chart" width="800" height="200"></canvas></div>
+        </div>
+
+        <!-- Samples during training -->
+        <div class="ft-section" id="pt-samples-section" style="display:none">
+          <div class="ft-section-head"><h3>🗣️ 模型试说话</h3><p class="desc">训练过程中模型自动生成的文本——观察模型从输出乱码到逐渐学会说话的过程</p></div>
+          <div id="pt-samples-list" class="pt-samples-list"></div>
+        </div>
+
+        <!-- Checkpoints -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>💾 Checkpoint 列表</h3><button class="btn-p" style="font-size:11px;padding:3px 10px;background:var(--bg3);color:var(--t2);border:1px solid var(--sfB)" id="btn-pt-refresh-ckpts">🔄 刷新</button></div>
+          <div id="pt-ckpt-list" class="pt-ckpt-list"><p class="desc">尚无 checkpoint</p></div>
+        </div>
+
+        <!-- Training log -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📜 训练日志</h3></div>
+          <div id="pt-train-log" class="pt-train-log"></div>
+        </div>
+
+        <!-- Training History / Records -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📋 训练记录</h3><p class="desc">每次训练完成后自动记录，包含架构、数据集、训练时长等信息</p></div>
+          <div id="pt-train-history" class="pt-train-history"><p class="desc">暂无训练记录</p></div>
+        </div>
+      </div>
+
+      <!-- Tab: Chat (streaming) -->
+      <div class="pt-pane" id="pt-chat">
+        <div class="ft-section">
+          <div class="ft-section-head">
+            <h3>💬 模型对话</h3>
+            <p class="desc" id="pt-chat-desc-pretrain">直接和你训练的模型流式对话，无需 Ollama。选择不同的 checkpoint 来对比不同训练阶段的能力</p>
+            <p class="desc" id="pt-chat-desc-sft" style="display:none">和你的 SFT 模型进行多轮对话。模型会使用训练时的对话模板来理解你的问题并回答</p>
+          </div>
+          <!-- SFT mode badge -->
+          <div id="pt-chat-sft-badge" style="display:none;margin-bottom:10px;padding:6px 12px;background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(168,85,247,.1));border-radius:8px;border:1px solid rgba(99,102,241,.2);font-size:11px;color:var(--accent)">
+            💬 SFT 对话模式 — 使用 <strong id="pt-chat-template-name">ChatML</strong> 模板格式化对话
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:150px"><label class="ft-label">Checkpoint</label><select id="pt-chat-ckpt" class="ft-input"><option value="">最新</option></select></div>
+            <div><label class="ft-label">Temperature</label><input type="number" id="pt-chat-temp" class="ft-input" value="0.8" min="0.1" max="2" step="0.1" style="width:80px"></div>
+            <div><label class="ft-label">Top-K</label><input type="number" id="pt-chat-topk" class="ft-input" value="50" min="1" max="200" style="width:80px"></div>
+            <div><label class="ft-label">Max Tokens</label><input type="number" id="pt-chat-max" class="ft-input" value="200" min="10" max="1000" style="width:80px"></div>
+            <button class="btn-p" id="btn-pt-chat-clear" style="padding:5px 10px;font-size:11px;background:var(--bg3);color:var(--t2);border:1px solid var(--sfB)" title="清空对话">🗑️ 清空</button>
+          </div>
+          <!-- Chat messages area -->
+          <div id="pt-chat-messages" class="pt-chat-messages">
+            <div class="pt-chat-placeholder">选择一个项目和 checkpoint，然后在下方输入文本开始对话</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input type="text" id="pt-chat-input" class="ft-input" placeholder="输入文本让模型续写..." style="flex:1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();document.getElementById('btn-pt-chat-send').click()}">
+            <button class="btn-p" id="btn-pt-chat-send">✨ 生成</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Playground & Export -->
+      <div class="pt-pane" id="pt-play">
+        <!-- Text Generation (sync) -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>🔬 快速生成测试</h3><p class="desc">快速同步生成（单次），适合快速测试和对比</p></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <div style="flex:1"><label class="ft-label">Checkpoint</label><select id="pt-play-ckpt" class="ft-input"><option value="">最新</option></select></div>
+            <div><label class="ft-label">Temperature</label><input type="number" id="pt-play-temp" class="ft-input" value="0.8" min="0.1" max="2" step="0.1" style="width:80px"></div>
+            <div><label class="ft-label">Top-K</label><input type="number" id="pt-play-topk" class="ft-input" value="50" min="1" max="200" style="width:80px"></div>
+            <div><label class="ft-label">Max Tokens</label><input type="number" id="pt-play-max" class="ft-input" value="100" min="10" max="500" style="width:80px"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="pt-play-prompt" class="ft-input" placeholder="输入提示词..." style="flex:1" onkeydown="if(event.key==='Enter')document.getElementById('btn-pt-generate').click()">
+            <button class="btn-p" id="btn-pt-generate">✨ 生成</button>
+          </div>
+          <div id="pt-play-result" style="display:none;margin-top:12px">
+            <div id="pt-play-output" class="pt-play-output"></div>
+            <div id="pt-play-stats" class="pt-play-stats"></div>
+          </div>
+        </div>
+
+        <!-- Comparison -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>🔀 Checkpoint 对比</h3><p class="desc">同一提示词在不同训练阶段的输出对比</p></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" id="pt-cmp-prompt" class="ft-input" placeholder="输入对比提示词..." style="flex:1">
+            <button class="btn-p" id="btn-pt-compare">🔀 对比生成</button>
+          </div>
+          <div id="pt-cmp-result" class="pt-cmp-grid"></div>
+        </div>
+
+        <!-- Export (HF format only, no Ollama) -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📦 模型导出</h3><p class="desc">将训练好的模型导出为 HuggingFace 格式 (safetensors)，可用于后续微调或分享</p></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <div><label class="ft-label">Checkpoint</label><select id="pt-exp-ckpt" class="ft-input"><option value="">最新</option></select></div>
+            <div><label class="ft-label">模型名</label><input type="text" id="pt-exp-name" class="ft-input" value="my-pretrained-model" style="width:200px"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-p" id="btn-pt-export-gguf">📦 导出 HuggingFace 格式</button>
+          </div>
+          <div id="pt-export-result" style="display:none;margin-top:12px" class="pt-tok-status"></div>
+        </div>
+
+        <!-- Saved samples timeline -->
+        <div class="ft-section">
+          <div class="ft-section-head"><h3>📈 训练历程</h3><p class="desc">模型在不同训练阶段的生成效果时间线</p></div>
+          <div id="pt-timeline" class="pt-timeline"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- New project dialog -->
+  <div class="overlay" id="ov-pt-new" style="display:none">
+    <div class="modal">
+      <div class="modal-h"><h2>🧪 新建训练项目</h2><button class="btn-i" id="cl-pt-new">✕</button></div>
+      <div class="modal-b" style="padding:16px">
+        <label class="ft-label">项目名称</label>
+        <input type="text" id="pt-new-name" class="ft-input" placeholder="例如：my-first-llm" style="margin-bottom:12px">
+        <label class="ft-label">起始模板</label>
+        <select id="pt-new-template" class="ft-input" style="margin-bottom:16px">
+          <option value="minimal">🟢 极简入门 (~2M) — 快速实验</option>
+          <option value="llama-tiny" selected>LLaMA Tiny (~25M)</option>
+          <option value="llama-small">LLaMA Small (~110M)</option>
+          <option value="gpt2-small">GPT-2 Small (~124M)</option>
+          <option value="gpt2-medium">GPT-2 Medium (~350M)</option>
+          <option value="mistral-tiny">Mistral Tiny (~25M)</option>
+          <option value="phi-tiny">Phi Tiny (~34M) — 微软 Phi 风格</option>
+          <option value="gemma-tiny">Gemma Tiny (~38M) — Google Gemma 风格</option>
+          <option value="moe-tiny">MoE Tiny (~96M) — 混合专家</option>
+        </select>
+        <button class="btn-p" id="btn-pt-create" style="width:100%">创建项目</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="/app.js"></script>
+<script src="/pretrain-lab.js"></script>
+</body>
+</html>
